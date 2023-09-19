@@ -1,14 +1,18 @@
 mod config;
+mod tests;
+mod views;
+
 use config::Config;
 use once_cell::sync::Lazy;
 use serde_json::{Result, Value};
 use std::string::ToString;
-use axum::{routing::get, Router, ServiceExt};
+use axum::{routing::{get, get_service}, Router, ServiceExt};
+use tower_http::services::ServeDir;
 
-
-async fn howdy() -> String {
-    "Hello world".to_string()
+fn route_static() -> Router {
+    Router::new().nest_service("/", get_service(ServeDir::new("./")))
 }
+
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {
     let config_str = include_str!("../settings.json");
@@ -19,10 +23,11 @@ pub static CONFIG: Lazy<Config> = Lazy::new(|| {
 #[tokio::main]
 async fn main() {
 
-
     let app = Router::new()
-        .route("/", get(howdy));
+                        .merge(views::hello_routes())
+                        .fallback_service(route_static());
 
+    println!("=> RUNNING ON {}", CONFIG.to_string());
     axum::Server::bind(&(CONFIG.to_string()).parse().unwrap())
         .serve(app.into_make_service())
         .await
