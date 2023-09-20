@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     pub hostname: String,
     pub port: u16,
-    pub postgres: PostgresConfig
+    pub postgres: PostgresConfig 
 }
 
 impl Config {
