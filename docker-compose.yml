@@ -1,0 +1,26 @@
+version: '3'
+services:
+  app:
+    build: ./
+    container_name: backend
+    ports:
+      - 8000:8000
+
+  db:
+    image: postgres
+    container_name: postgres_database
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=backend_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    healthcheck:
+      test: pg_isready -d postgres
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    volumes:
+      - ./pgdata:/var/lib/postgres/data
+    
+    

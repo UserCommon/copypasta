@@ -16,3 +16,7 @@ pub async fn howdy(Query(params): Query<Params>) -> impl IntoResponse {
     let param = params.name.as_deref().unwrap_or("world!");
     Html(format!("Hello <strong>{param}</strong>"))
 }
+
+pub async fn create_pasta() -> impl IntoResponse {
+    todo!()
+}
