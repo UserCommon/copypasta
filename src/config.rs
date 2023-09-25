@@ -1,12 +1,15 @@
 use serde::{Deserialize, Serialize};
-
+pub trait Urls {
+    fn get_db_url(&self) -> String;
+    fn get_url(&self) -> String;
+}
 
 /// Our config structure that deserializes settings.json
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
     pub hostname: String,
     pub port: u16,
-    pub postgres: PostgresConfig 
+    pub postgres: PostgresConfig,
 }
 
 impl Config {
@@ -15,61 +18,73 @@ impl Config {
         hostname: S,
         port: U,
         postgres_user: S,
-        posrgres_password: S,
-        postgres_port: U
+        postgres_password: S,
+        postgres_port: U,
+        postgres_db: S,
     ) -> Self
-    where S: Into<String>, U: Into<u16>
+    where
+        S: Into<String>,
+        U: Into<u16>,
     {
         Self {
             hostname: hostname.into(),
             port: port.into(),
             postgres: PostgresConfig::new(
                 postgres_user,
-                posrgres_password,
-                postgres_port
-            )
+                postgres_password,
+                postgres_port,
+                postgres_db,
+            ),
         }
     }
 }
 
-impl Default for Config {
-    /// Non-params creation of Config in 0.0.0.0:3000 
-    fn default() -> Self {
-        Self {
-            hostname: "0.0.0.0".to_string(),
-            port: 3000,
-            postgres: PostgresConfig::default()
-        }
+impl Urls for Config {
+    fn get_db_url(&self) -> String {
+        format!(
+            "postgres://{user}:{password}@{host}:{port}/{db}",
+            user = self.postgres.user,
+            password = self.postgres.password,
+            host = self.hostname,
+            port = self.postgres.port,
+            db = self.postgres.db
+        )
     }
-}
-
-impl ToString for Config {
-    /// get host:port view of struct
-    fn to_string(&self) -> String {
+    fn get_url(&self) -> String {
         format!("{}:{}", self.hostname, self.port)
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+impl Default for Config {
+    /// Non-params creation of Config in 0.0.0.0:3000
+    fn default() -> Self {
+        Self {
+            hostname: "0.0.0.0".to_string(),
+            port: 3000,
+            postgres: PostgresConfig::default(),
+        }
+    }
+}
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PostgresConfig {
-    pub postgres_user: String,
-    pub postgres_password: String,
-    pub postgres_port: u16
+    pub user: String,
+    pub password: String,
+    pub port: u16,
+    pub db: String,
 }
 
 impl PostgresConfig {
-    pub fn new<S, U>(
-        postgres_user: S,
-        postgres_password: S,
-        postgres_port: U
-    ) -> Self
-    where S: Into<String>, U: Into<u16>
+    pub fn new<S, U>(user: S, password: S, port: U, db: S) -> Self
+    where
+        S: Into<String>,
+        U: Into<u16>,
     {
         Self {
-            postgres_user: postgres_user.into(),
-            postgres_password: postgres_password.into(),
-            postgres_port: postgres_port.into()
+            user: user.into(),
+            password: password.into(),
+            port: port.into(),
+            db: db.into(),
         }
     }
 }
@@ -77,9 +92,11 @@ impl PostgresConfig {
 impl Default for PostgresConfig {
     fn default() -> Self {
         Self {
-            postgres_user: "postgres".to_string(),
-            postgres_password: "".to_string(),
-            postgres_port: 5432
+            user: "postgres".to_string(),
+            password: "".to_string(),
+
+            port: 5432,
+            db: "app".into(),
         }
     }
 }
