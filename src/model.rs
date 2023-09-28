@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Debug, sqlx::FromRow)]
 #[serde(rename_all = "camelCase")]
 pub struct PastaModel {
-    pub id: i32,
+    pub id: uuid::Uuid,
     pub lang: Option<String>,
     pub text: Option<String>,
     pub created_at: Option<chrono::DateTime<chrono::Utc>>,
