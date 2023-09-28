@@ -7,6 +7,7 @@ use axum::{
     Extension,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::sync::Arc;
 
 use crate::{model::*, schema::*, AppState};
@@ -20,7 +21,7 @@ pub fn pasta_routes(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/check", get(check))
         .route("/", get(pasta_list).post(pasta_create))
-        .route("/:id", delete(delete_pasta))
+        .route("/:id", delete(delete_pasta).get(read_pasta))
         .with_state(state.clone())
 }
 
@@ -63,6 +64,36 @@ pub async fn pasta_list(
         "pastas": pastas
     });
     Ok(Json(json_response))
+}
+
+pub async fn read_pasta(
+    Path(id): Path<uuid::Uuid>,
+    State(data): State<Arc<AppState>>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let pasta = sqlx::query_as!(
+        PastaModel,
+        r#"
+            SELECT * FROM pasta WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(&data.db)
+    .await
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({
+                "status": "failed",
+                "message": format!("{:?}", e)
+            })),
+        )
+    })?;
+
+    let resp = json!({
+        "status": "succsess",
+        "data": pasta
+    });
+    Ok(Json(resp))
 }
 
 pub async fn pasta_create(
