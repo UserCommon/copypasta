@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
     response::{IntoResponse, Json},
-    routing::{get, post, Router},
+    routing::{delete, get, post, Router},
     Extension,
 };
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,7 @@ pub fn pasta_routes(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/check", get(check))
         .route("/", get(pasta_list).post(pasta_create))
+        .route("/:id", delete(delete_pasta))
         .with_state(state.clone())
 }
 
@@ -74,7 +75,7 @@ pub async fn pasta_create(
         INSERT INTO pasta (id, lang, text) VALUES ($1, $2, $3) 
         "#,
     )
-    .bind(user_id.clone())
+    .bind(user_id)
     .bind(body.lang.to_string())
     .bind(body.text.to_string())
     .execute(&data.db)
@@ -124,4 +125,33 @@ pub async fn pasta_create(
         })
     });
     Ok(Json(pasta_resp))
+}
+
+pub async fn delete_pasta(
+    State(data): State<Arc<AppState>>,
+    Path(id): Path<uuid::Uuid>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let query = sqlx::query!(r#"DELETE FROM pasta WHERE id=$1"#, id)
+        .execute(&data.db)
+        .await
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(serde_json::json!({
+                    "status": "error",
+                    "message": format!("{:?}", e)
+                })),
+            )
+        })?;
+    if query.rows_affected() == 0 {
+        let err_response = serde_json::json!({
+            "status": "fail",
+            "message": format!("Pasta with ID: {} not found", id)
+        });
+        return Err((StatusCode::NOT_FOUND, Json(err_response)));
+    }
+    let resp = serde_json::json!({
+        "status": "success",
+    });
+    Ok(Json(resp))
 }
