@@ -1,12 +1,7 @@
 version: '3'
 services:
-  app:
-    build: ./
-    container_name: backend
-    ports:
-      - 8000:8000
-
   db:
+    hostname: db
     image: postgres
     container_name: postgres_database
     restart: unless-stopped
@@ -15,7 +10,7 @@ services:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password
     ports:
-      - 8081:5432
+      - 5432:5432
     healthcheck:
       test: pg_isready -d postgres
       interval: 20s
@@ -23,6 +18,30 @@ services:
       retries: 3
       start_period: 5s
     volumes:
-      - /var/lib/postgres/data:/var/lib/postgres/data
-    
-    
+      - ./pgdata:/var/lib/postgres/data
+    networks:
+        - mynet
+
+  auth:
+    build: ./copypasta-auth/
+    container_name: auth
+    ports:
+     - 8001:8001
+
+  backend:
+    build: ./copypasta/
+    container_name: backend
+    ports:
+      - 8000:8000
+    environment:
+          - DB_CONNECTION=pgsql
+          - DB_HOST=db
+          - DB_PORT=5432
+          - DB_DATABASE=backend_db
+          - DB_USERNAME=user
+    networks:
+        - mynet
+   
+networks:
+    mynet:
+      name: shared-db

@@ -17,6 +17,7 @@ impl Config {
     pub fn new<S, U>(
         hostname: S,
         port: U,
+        postgres_host: S,
         postgres_user: S,
         postgres_password: S,
         postgres_port: U,
@@ -32,6 +33,7 @@ impl Config {
             postgres: PostgresConfig::new(
                 postgres_user,
                 postgres_password,
+                postgres_host,
                 postgres_port,
                 postgres_db,
             ),
@@ -70,12 +72,13 @@ impl Default for Config {
 pub struct PostgresConfig {
     pub user: String,
     pub password: String,
+    pub host: String,
     pub port: u16,
     pub db: String,
 }
 
 impl PostgresConfig {
-    pub fn new<S, U>(user: S, password: S, port: U, db: S) -> Self
+    pub fn new<S, U>(user: S, host: S, password: S, port: U, db: S) -> Self
     where
         S: Into<String>,
         U: Into<u16>,
@@ -84,6 +87,7 @@ impl PostgresConfig {
             user: user.into(),
             password: password.into(),
             port: port.into(),
+            host: host.into(),
             db: db.into(),
         }
     }
@@ -94,7 +98,7 @@ impl Default for PostgresConfig {
         Self {
             user: "postgres".to_string(),
             password: "".to_string(),
-
+            host: "postgres".to_string(),
             port: 5432,
             db: "app".into(),
         }
