@@ -58,6 +58,7 @@ async fn main() {
 
     println!("=> RUNNING ON {}!", CONFIG.get_url());
     println!("=> Config: {conf:#?}", conf = CONFIG);
+    println!("=> Config_URL: {}", CONFIG.get_url());
 
     let state = Arc::new(AppState { db });
 

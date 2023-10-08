@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 pub trait Urls {
     fn get_db_url(&self) -> String;
     fn get_url(&self) -> String;
@@ -43,11 +44,12 @@ impl Config {
 
 impl Urls for Config {
     fn get_db_url(&self) -> String {
+        // Problem is that host: localhost but it's not
         format!(
             "postgres://{user}:{password}@{host}:{port}/{db}",
             user = self.postgres.user,
             password = self.postgres.password,
-            host = self.hostname,
+            host = self.postgres.host,
             port = self.postgres.port,
             db = self.postgres.db
         )

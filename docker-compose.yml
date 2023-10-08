@@ -1,9 +1,8 @@
 version: '3'
 services:
-  db:
-    hostname: db
+  copypasta_db:
     image: postgres
-    container_name: postgres_database
+    container_name: copypasta_db 
     restart: unless-stopped
     environment:
       - POSTGRES_DB=backend_db
@@ -18,17 +17,11 @@ services:
       retries: 3
       start_period: 5s
     volumes:
-      - ./pgdata:/var/lib/postgres/data
+      - ./pgdata_copypasta:/var/lib/postgres/data
     networks:
         - mynet
 
-  auth:
-    build: ./copypasta-auth/
-    container_name: auth
-    ports:
-     - 8001:8001
-
-  backend:
+  copypasta:
     build: ./copypasta/
     container_name: backend
     ports:
@@ -41,6 +34,14 @@ services:
           - DB_USERNAME=user
     networks:
         - mynet
+  
+  keycloack:
+    image: quay.io/keycloak/keycloak:22.0.4
+    ports:
+      - 8080:8080
+    environment:
+      - KEYCLOACK_ADMIN = admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
    
 networks:
     mynet:
